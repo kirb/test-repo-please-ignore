@@ -18,12 +18,15 @@ jobs:
 
     steps:
     - name: Install WSL
-      uses: Vampire/setup-wsl@v3
+      uses: Vampire/setup-wsl@v3.1.1
       with:
         distribution: Ubuntu-22.04
 
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        repository: LegacyUpdate/LegacyUpdate
+        ref: bugfix/ci-testing
 
     - name: Set up WSL
       run: |
