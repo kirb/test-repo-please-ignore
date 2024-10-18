@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    env:
+      WSLENV: GITHUB_OUTPUT
+
+    steps:
+    - name: Install WSL
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up WSL
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -qy cabextract curl make mingw-w64-x86-64-dev nsis nsis-pluginapi p7zip-full upx-ucl unzip
+        ./build/fix-nsis.sh
+
+    - name: Set up Visual Studio
+      shell: pwsh -command ". '{0}'"
+      run: |
+        $env:PATH = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer;" + $env:PATH
+        $vs = vswhere -latest -property installationPath
+        $installer = Start-Process -Wait -PassThru -FilePath vs_installer.exe -ArgumentList ( `
+          'modify', '--quiet', '--norestart', '--noUpdateInstaller', `
+          '--installPath', "`"$vs`"", `
+          '--config', '.vsconfig' `
+        )
+        # if ($installer.ExitCode -ne 0) {
+          Invoke-WebRequest -Uri https://aka.ms/vscollect.exe -OutFile vscollect.exe
+          & .\vscollect.exe -zip:vslogs.zip
+          exit $installer.ExitCode
+        # }
+
+    - name: Upload Visual Studio error logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: vslogs
+        path: vslogs.zip
+
+    - name: Install MinGW toolchain
+      run: |
+        curl -fsSL https://linuxfromscratch.org/~renodr/gcc-14.2-binutils-2.43.1-mingw-v12.0.0-i686.tar.xz -o /tmp/mingw32.tar.xz
+        curl -fsSL https://linuxfromscratch.org/~renodr/gcc-14.2-binutils-2.43.1-mingw-v12.0.0-x86_64.tar.xz -o /tmp/mingw64.tar.xz
+        sudo tar -xf /tmp/mingw32.tar.xz -C /opt
+        sudo tar -xf /tmp/mingw64.tar.xz -C /opt
+        rm /tmp/mingw{32,64}.tar.xz
+
+    - name: Extract updroots.exe
+      run: |
+        curl -fsSL http://download.windowsupdate.com/d/msdownload/update/software/secu/2015/03/rvkroots_3f2ce4676450c06f109b5b4e68bec252873ccc21.exe -o /tmp/rvkroots.exe
+        cabextract -d setup -F updroots.exe /tmp/rvkroots.exe
+        rm /tmp/rvkroots.exe
+
+    - name: Build
+      id: build
+      run: |
+        export PATH=/opt/gcc-14.2-binutils-2.43.1-mingw-v12.0.0-i686/bin:$PATH
+        export PATH=/opt/gcc-14.2-binutils-2.43.1-mingw-v12.0.0-x86_64/bin:$PATH
+        make CI=1 DEBUG=0
+        echo "out=$(echo setup/LegacyUpdate-*.exe)" >> "$(wslpath -u "$GITHUB_OUTPUT")"
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        path: '${{ steps.build.outputs.out }}'

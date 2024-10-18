@@ -1,0 +1,32 @@
+name: Sanity check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    env:
+      WSLENV: GITHUB_OUTPUT
+
+    steps:
+    - name: Install WSL
+      uses: Vampire/setup-wsl@v3
+      with:
+        distribution: Ubuntu-22.04
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Please work
+      run: |
+        echo 'awesome'
+        uname -a
+        lsb_release -a
