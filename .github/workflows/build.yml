@@ -44,11 +44,11 @@ jobs:
           '--installPath', "`"$vs`"", `
           '--config', '.vsconfig' `
         )
-        # if ($installer.ExitCode -ne 0) {
+        if ($installer.ExitCode -ne 0) {
           Invoke-WebRequest -Uri https://aka.ms/vscollect.exe -OutFile vscollect.exe
           & .\vscollect.exe -zip:vslogs.zip
           exit $installer.ExitCode
-        # }
+        }
 
     - name: Upload Visual Studio error logs
       if: failure()
