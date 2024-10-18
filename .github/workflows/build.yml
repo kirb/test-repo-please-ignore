@@ -20,7 +20,7 @@ jobs:
     - name: Install WSL
       uses: Vampire/setup-wsl@v3.1.1
       with:
-        distribution: Ubuntu-24.04
+        distribution: https://wslstorestorage.blob.core.windows.net/wslblob/Ubuntu2404-240425.AppxBundle
 
     - name: Checkout
       uses: actions/checkout@v4
