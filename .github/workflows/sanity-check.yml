@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: Install WSL
-      uses: Vampire/setup-wsl@942db883f796a3ffb1ee68090c4a1ae7c26ebf12
+      uses: Vampire/setup-wsl@53f1a4629b5d6f6092c33a276d1ff2633893fbbc
       with:
         distribution: Ubuntu-22.04
 
