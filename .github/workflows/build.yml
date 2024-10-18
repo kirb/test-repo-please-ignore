@@ -18,9 +18,9 @@ jobs:
 
     steps:
     - name: Install WSL
-      uses: Vampire/setup-wsl@v3.1.1
+      uses: Vampire/setup-wsl@v3
       with:
-        distribution: https://wslstorestorage.blob.core.windows.net/wslblob/Ubuntu2404-240425.AppxBundle
+        distribution: Ubuntu-24.04
 
     - name: Checkout
       uses: actions/checkout@v4
